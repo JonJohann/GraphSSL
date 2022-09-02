@@ -211,6 +211,18 @@ def node_insertion(data):#torch_geometric.data.Data type
     new_graph = Data(x=new_node_features, y = data.y, edge_index= new_edge_index, edge_attr=None)
     return new_graph
 
+def new_feature_matrix(data):
+    G = to_networkx(data)
+    m = nx.adjacency_matrix(G)
+    norm = (m * m).sum(0, keepdims=True) ** .5
+    m_norm = m/norm
+    similarity_matrix = m_norm @ m_norm.T
+    new_graph = nx.from_numpy_matrix(similarity_matrix)
+    nx.set_node_attributes(new_graph,nx.get_node_attributes(G))
+    new_data = from_networkx(new_graph)
+    return new_data
+
+
 
 def random_augmentation(batch_graph):
     '''
@@ -221,7 +233,7 @@ def random_augmentation(batch_graph):
     new_graph_list = []
 
     for graph in batch_graph:
-        random_number = random.randint(0,3)
+        random_number = random.randint(0,4)
         new_graph = graph
 
         if random_number==0:
@@ -232,11 +244,11 @@ def random_augmentation(batch_graph):
             new_graph = edge_insertion(new_graph)
         elif random_number==3:
             new_graph = node_insertion(new_graph)
+        elif random_number==4:
+            new_graph = new_feature_matrix(new_graph)
         #else:
          #   new_graph.edge_attr = None
 
         new_graph_list.append(new_graph)
 
     return new_graph_list
-
-
